@@ -13,7 +13,8 @@
       "Bash(python3.11 -c \"import pandas; print\\('ok'\\)\")",
       "Bash(python3.12 -c \"import pandas; print\\('ok'\\)\")",
       "Read(//usr/local/lib/**)",
-      "Bash(/opt/anaconda3/bin/python *)"
+      "Bash(/opt/anaconda3/bin/python *)",
+      "Bash(pip list *)"
     ]
   }
 }
