@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/opt/anaconda3/envs/astock/bin/python *)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' --max-time 10 'https://push2his.eastmoney.com/api/qt/stock/kline/get?fields1=f1,f2&fields2=f51,f52&ut=test&klt=101&fqt=1&secid=1.600519&beg=20260601&end=20260625' -H 'User-Agent: Mozilla/5.0' -H 'Referer: https://quote.eastmoney.com/')",
+      "Bash(ASTOCK_CONFIG=/Users/ali/Documents/Cowork/stock/astock-analysis/config/providers.yaml /opt/anaconda3/envs/astock/bin/python *)",
+      "Bash(python *)",
+      "Bash(python3 -c \"import pandas; print\\('pandas ok'\\)\")",
+      "Bash(python3 -c \"import akshare; print\\('akshare ok'\\)\")",
+      "Read(//usr/local/bin/**)",
+      "Bash(pip --version)",
+      "Read(//Users/ali/**)",
+      "Bash(python3.11 -c \"import pandas; print\\('ok'\\)\")",
+      "Bash(python3.12 -c \"import pandas; print\\('ok'\\)\")",
+      "Read(//usr/local/lib/**)",
+      "Bash(/opt/anaconda3/bin/python *)"
+    ]
+  }
+}
