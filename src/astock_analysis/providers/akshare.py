@@ -1113,58 +1113,104 @@ class AkshareProvider:
         Returns:
             dict with stock metadata.
         """
-        if not _AK_AVAILABLE:
-            raise ProviderError("akshare is not installed. Run: pip install akshare")
-
+        # Try East Money API directly (akshare wrapper is version-fragile)
         try:
-            df = ak.stock_individual_info_em(  # type: ignore[union-attr]
-                symbol=code
-            )
+            return self._fetch_stock_info_eastmoney(code)
         except Exception as e:
-            # East Money blocks Python requests library; fall back to CNInfo
             logger.warning(
                 "East Money stock_info failed for %s (%s), falling back to CNInfo",
                 code, e,
             )
-            try:
-                df = ak.stock_profile_cninfo(  # type: ignore[union-attr]
-                    symbol=code
-                )
-                if df is not None and not df.empty:
-                    row = df.iloc[0].to_dict()
-                    return {
-                        "code": code,
-                        "name": str(row.get("A股简称", "")),
-                        "full_name": str(row.get("公司名称", "")),
-                        "industry": str(row.get("所属行业", "")),
-                        "list_date": str(row.get("上市日期", "")),
-                        "total_shares": None,
-                        "circ_shares": None,
-                        "province": str(row.get("注册地址", "")),
-                    }
-            except Exception as e2:
-                raise ProviderError(
-                    f"akshare stock_info fetch failed for {code}: {e}"
-                ) from e2
+            return self._fetch_stock_info_cninfo(code)
 
+    def _fetch_stock_info_eastmoney(self, code: str) -> dict:
+        """Fetch stock info via East Money push2 API (direct call)."""
+        market_code = 1 if code.startswith("6") else 0
+        url = "https://push2.eastmoney.com/api/qt/stock/get"
+        params = {
+            "fltt": "2",
+            "invt": "2",
+            "fields": (
+                "f43,f44,f45,f46,f57,f58,f60,f84,f85,f92,f116,f117,"
+                "f127,f128,f162,f167,f168,f170,f173,f189"
+            ),
+            "secid": f"{market_code}.{code}",
+        }
+        data = self._eastmoney_json(url, params)
+        d = data.get("data", {})
+        if not d or not d.get("f57"):
             raise ProviderError(
-                f"akshare stock_info fetch failed for {code}: {e}"
-            ) from e
+                f"East Money returned empty stock info for {code}"
+            )
 
-        if df is None or df.empty:
-            raise ProviderError(f"akshare returned empty stock info for {code}")
+        raw_name = str(d.get("f58", ""))
+        # Remove XD/XR/DR prefix from stock name
+        name = raw_name
+        for prefix in ("XD", "XR", "DR"):
+            if name.startswith(prefix):
+                name = name[len(prefix):]
+                break
 
-        row = df.set_index("item")["value"].to_dict() if "item" in df.columns else {}
-        logger.info("akshare stock_info: fetched for %s", code)
+        def _f(field: str) -> float | None:
+            val = d.get(field)
+            if val is None or val == "-":
+                return None
+            try:
+                return float(val)
+            except (ValueError, TypeError):
+                return None
+
         return {
             "code": code,
-            "name": str(row.get("股票简称", "")),
+            "name": name,
+            "full_name": "",  # full name not available from this endpoint
+            "industry": str(d.get("f127", "")),
+            "list_date": str(d.get("f189", "")),
+            "total_shares": _f("f84"),
+            "circ_shares": _f("f85"),
+            "province": str(d.get("f128", "")),
+            "total_market_cap": _f("f116"),
+            "circ_market_cap": _f("f117"),
+            "pe": _f("f162"),
+            "pb": _f("f167"),
+            "eps": _f("f92"),
+            "bvps": _f("f173"),
+            "price": _f("f43"),
+            "turnover": _f("f168"),
+            "pct_chg": _f("f170"),
+        }
+
+    def _fetch_stock_info_cninfo(self, code: str) -> dict:
+        """Fetch stock info via CNInfo fallback."""
+        if not _AK_AVAILABLE:
+            raise ProviderError("akshare is not installed. Run: pip install akshare")
+        try:
+            df = ak.stock_profile_cninfo(symbol=code)  # type: ignore[union-attr]
+        except Exception as e:
+            raise ProviderError(
+                f"akshare stock_info (CNInfo) fetch failed for {code}: {e}"
+            ) from e
+        if df is None or df.empty:
+            raise ProviderError(f"akshare returned empty stock info for {code}")
+        row = df.iloc[0].to_dict()
+        return {
+            "code": code,
+            "name": str(row.get("A股简称", "")),
             "full_name": str(row.get("公司名称", "")),
-            "industry": str(row.get("行业", "")),
-            "list_date": str(row.get("上市时间", "")),
-            "total_shares": float(row.get("总股本", 0)) if row.get("总股本") else None,
-            "circ_shares": float(row.get("流通股", 0)) if row.get("流通股") else None,
-            "province": str(row.get("省份", "")),
+            "industry": str(row.get("所属行业", "")),
+            "list_date": str(row.get("上市日期", "")),
+            "total_shares": None,
+            "circ_shares": None,
+            "province": str(row.get("注册地址", "")),
+            "total_market_cap": None,
+            "circ_market_cap": None,
+            "pe": None,
+            "pb": None,
+            "eps": None,
+            "bvps": None,
+            "price": None,
+            "turnover": None,
+            "pct_chg": None,
         }
 
     # ── IPO ───────────────────────────────────────────────────────
