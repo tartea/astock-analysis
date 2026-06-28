@@ -38,6 +38,10 @@ def pprint_ipo(response: dict) -> None:
         return
 
     keys = list(data[0].keys())
+    priority = ["股票代码", "股票简称", "sector", "industry"]
+    ordered = [k for k in priority if k in keys]
+    remainder = [k for k in keys if k not in ordered]
+    keys = ordered + remainder
 
     def _trunc(v: str, width: int = 22) -> str:
         return v if len(v) <= width else v[:width-3] + "..."
