@@ -68,7 +68,7 @@ def main() -> None:
     from astock_analysis.dimensions.stock_info import fetch_stock_info
 
     print()
-    print(f"  股票: {STOCK_CODE} (贵州茅台)")
+    print(f"  股票: {STOCK_CODE} (永鼎股份)")
     print()
 
     try:

@@ -38,6 +38,8 @@ core/cache.py  ·  SQLite 缓存           ← 6 级 TTL（60s → 7d）
 conda create -n astock python=3.11 -y
 conda activate astock
 
+ /opt/anaconda3/envs/astock/bin/python
+
 # 安装依赖
 pip install akshare pandas pyyaml
 

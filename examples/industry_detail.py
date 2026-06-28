@@ -40,9 +40,8 @@ def pprint_industry(response: dict) -> None:
 
     keys = list(data[0].keys())
 
-    # Truncate long string values for cleaner display
     def _trunc(v: str, width: int = 20) -> str:
-        return v if len(v) <= width else v[:width-3] + "..."
+        return v if len(v) <= width else v[:width - 3] + "..."
 
     col_widths = {k: max(len(str(k)), 12) for k in keys}
     for row in data:
@@ -73,12 +72,30 @@ def main() -> None:
 
     print()
 
+    # ── 模式1: 列出所有行业板块 ──
+    print("【模式1】列出所有行业板块")
     try:
         response = fetch_industry()
         pprint_industry(response)
     except Exception as e:
         print(f"\n  [错误] {e}")
-        sys.exit(1)
+
+    # ── 模式2: 查询具体板块历史 ──
+    print("\n【模式2】查询「半导体」板块历史行情（最近5条）")
+    try:
+        response = fetch_industry(board_name="半导体")
+        data = response.get("data", [])
+        print(f"  provider  : {response.get('provider', '?')}")
+        print(f"  board_name: {response.get('board_name', '?')}")
+        print(f"  records   : {len(data)} 条")
+        if data:
+            keys = list(data[0].keys())
+            for row in data[-5:]:
+                print("  ", {k: row.get(k) for k in keys})
+    except Exception as e:
+        print(f"\n  [错误] {e}")
+
+    print()
 
 
 if __name__ == "__main__":

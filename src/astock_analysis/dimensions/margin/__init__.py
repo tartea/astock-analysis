@@ -23,11 +23,18 @@ from .types import MarginResponse
 register_provider("akshare", akshare_provider)
 
 
-def fetch_margin(code: str = "", use_cache: bool = True) -> MarginResponse:
+def fetch_margin(
+    code: str = "",
+    start_date: str = "",
+    end_date: str = "",
+    use_cache: bool = True,
+) -> MarginResponse:
     """Fetch margin trading (融资融券) detail data.
 
     Args:
         code: Optional stock code filter
+        start_date: Start date 'YYYY-MM-DD' (default: 30 days ago)
+        end_date: End date 'YYYY-MM-DD' (default: today)
         use_cache: Whether to use the cache layer (default True)
 
     Returns:
@@ -40,6 +47,8 @@ def fetch_margin(code: str = "", use_cache: bool = True) -> MarginResponse:
         method_name="fetch_margin",
         dimension="margin",
         code=code,
+        start_date=start_date,
+        end_date=end_date,
         ticker=code or "market",
         cache_ttl=cache_ttl,
         config=config,

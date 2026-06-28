@@ -18,7 +18,7 @@ from astock_analysis.core.config import get_config
 from astock_analysis.core.cache import TTL_DAILY
 from astock_analysis.providers.akshare import provider as akshare_provider
 
-from .types import LHBResponse
+from .types import LHBResponse, LHBDetailResponse
 
 register_provider("akshare", akshare_provider)
 
@@ -64,4 +64,49 @@ def fetch_lhb(
         data=[{k: (None if pd.isna(v) else v) for k, v in r.items()} for r in records],
         provider=provider_name,
         code=code,
+    )
+
+
+def fetch_lhb_detail(
+    code: str,
+    date: str = "",
+    use_cache: bool = True,
+) -> LHBDetailResponse:
+    """Fetch per-trading-desk LHB detail for a stock on a given date.
+
+    Args:
+        code: A-share stock code (e.g. '600105'). Required.
+        date: LHB date 'YYYY-MM-DD'. If empty, uses the latest available date.
+        use_cache: Whether to use the cache layer (default True).
+
+    Returns:
+        LHBDetailResponse with desk-level records and metadata.
+    """
+    config = get_config()
+    cache_ttl = TTL_DAILY if use_cache else None
+
+    df, provider_name = try_chain(
+        method_name="fetch_lhb_detail",
+        dimension="lhb",
+        code=code,
+        date=date,
+        ticker=code,
+        cache_ttl=cache_ttl,
+        config=config,
+    )
+
+    if not isinstance(df, pd.DataFrame):
+        raise ProviderError(
+            f"Provider '{provider_name}' returned {type(df).__name__} instead of DataFrame"
+        )
+
+    records = df.to_dict(orient="records")
+    clean = [{k: (None if pd.isna(v) else v) for k, v in r.items()} for r in records]
+    resolved_date = date or df.attrs.get("date", "")
+
+    return LHBDetailResponse(
+        desks=clean,
+        provider=provider_name,
+        code=code,
+        date=resolved_date if isinstance(resolved_date, str) else str(resolved_date),
     )

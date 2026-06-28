@@ -21,7 +21,7 @@ os.environ["ASTOCK_CONFIG"] = os.path.join(
     os.path.dirname(__file__), "..", "config", "providers.yaml"
 )
 
-STOCK_CODE = "600519"
+STOCK_CODE = "600105"
 START_DATE = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
 END_DATE = datetime.now().strftime("%Y-%m-%d")
 

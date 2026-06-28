@@ -49,6 +49,19 @@ except ImportError:
     _AK_AVAILABLE = False
 
 
+def _to_exchange_code(code: str) -> str:
+    """Convert plain A-share code to exchange-prefixed format.
+
+    6xxxxx → sh, 0/3xxxxx → sz.
+    """
+    code = code.strip()
+    if code.startswith(("sh", "sz", "bj")):
+        return code
+    if code.startswith(("6", "5")):
+        return f"sh{code}"
+    return f"sz{code}"
+
+
 class AkshareProvider:
     """Provider wrapping akshare for A-share data.
 
@@ -676,6 +689,124 @@ class AkshareProvider:
         logger.info("akshare lhb: %s rows", len(df))
         return df
 
+    def fetch_lhb_detail(
+        self, code: str = "", date: str = ""
+    ) -> pd.DataFrame:
+        """Fetch per-trading-desk LHB detail for a stock-date.
+
+        Calls akshare's stock_lhb_stock_detail_em twice (buy + sell) and
+        merges by trading desk name to produce one row per unique desk.
+
+        Args:
+            code: A-share stock code (e.g. '600105'). Required.
+            date: LHB date 'YYYYMMDD' or 'YYYY-MM-DD'.
+                  If empty, auto-detects the latest available LHB date.
+        """
+        if not _AK_AVAILABLE:
+            raise ProviderError("akshare is not installed. Run: pip install akshare")
+
+        if not code:
+            raise ProviderError("code is required for fetch_lhb_detail")
+
+        if not date:
+            try:
+                date_df = ak.stock_lhb_stock_detail_date_em(  # type: ignore[union-attr]
+                    symbol=code
+                )
+            except Exception as e:
+                raise ProviderError(
+                    f"akshare LHB date query failed for {code}: {e}"
+                ) from e
+
+            if date_df is None or date_df.empty:
+                raise ProviderError(
+                    f"No LHB dates found for stock {code}"
+                )
+
+            latest = date_df.iloc[0]["交易日"]
+            date = latest.strftime("%Y%m%d")
+        else:
+            date = date.replace("-", "")
+
+        try:
+            df_buy = ak.stock_lhb_stock_detail_em(  # type: ignore[union-attr]
+                symbol=code, date=date, flag="买入"
+            )
+            df_sell = ak.stock_lhb_stock_detail_em(  # type: ignore[union-attr]
+                symbol=code, date=date, flag="卖出"
+            )
+        except Exception as e:
+            raise ProviderError(
+                f"akshare LHB detail fetch failed for {code} on {date}: {e}"
+            ) from e
+
+        if (df_buy is None or df_buy.empty) and (df_sell is None or df_sell.empty):
+            raise ProviderError(
+                f"No LHB detail data for {code} on {date}"
+            )
+
+        col_map = {
+            "交易营业部名称": "desk_name",
+            "买入金额": "buy_amount",
+            "买入金额-占总成交比例": "buy_pct",
+            "卖出金额": "sell_amount",
+            "卖出金额-占总成交比例": "sell_pct",
+            "净额": "net_amount",
+        }
+
+        def _prepare(df: pd.DataFrame) -> pd.DataFrame:
+            df = df.rename(columns=col_map)
+            keep = ["desk_name", "buy_amount", "buy_pct",
+                    "sell_amount", "sell_pct"]
+            return df[[c for c in keep if c in df.columns]]
+
+        records: dict[str, dict] = {}
+
+        for df_raw in (df_buy, df_sell):
+            if df_raw is None or df_raw.empty:
+                continue
+            clean = _prepare(df_raw)
+            for _, row in clean.iterrows():
+                name = str(row.get("desk_name", "")).strip()
+                if not name:
+                    continue
+                if name not in records:
+                    records[name] = {
+                        "desk_name": name,
+                        "buy_amount": None,
+                        "buy_pct": None,
+                        "sell_amount": None,
+                        "sell_pct": None,
+                    }
+                r = records[name]
+                for col in ("buy_amount", "buy_pct", "sell_amount", "sell_pct"):
+                    val = row.get(col)
+                    if pd.notna(val):
+                        r[col] = float(val)
+
+        for r in records.values():
+            buy = r["buy_amount"] or 0
+            sell = r["sell_amount"] or 0
+            r["net_amount"] = buy - sell
+
+        if not records:
+            raise ProviderError(
+                f"No trading desk records for {code} on {date}"
+            )
+
+        result_df = pd.DataFrame(list(records.values()))
+        result_df = result_df[
+            ["desk_name", "buy_amount", "buy_pct",
+             "sell_amount", "sell_pct", "net_amount"]
+        ]
+        result_df.attrs["date"] = date
+
+        logger.info(
+            "akshare lhb_detail: %s desks for %s on %s",
+            len(result_df), code, date,
+        )
+        return result_df
+
     # ── Sentiment ─────────────────────────────────────────────────
 
     def fetch_sentiment(self) -> dict:
@@ -821,11 +952,11 @@ class AkshareProvider:
             if board_name:
                 df = ak.stock_board_industry_hist_em(  # type: ignore[union-attr]
                     symbol=board_name,
-                    period="daily",
+                    period="日k",
                     adjust="",
                 )
             else:
-                # Prefer THS (同花顺) over East Money for listing
+                # Prefer East Money, fall back to THS (同花顺)
                 try:
                     df = ak.stock_board_industry_name_em()  # type: ignore[union-attr]
                 except Exception:
@@ -880,11 +1011,15 @@ class AkshareProvider:
 
     # ── Margin trading ────────────────────────────────────────────
 
-    def fetch_margin(self, code: str = "") -> pd.DataFrame:
+    def fetch_margin(
+        self, code: str = "", start_date: str = "", end_date: str = ""
+    ) -> pd.DataFrame:
         """Fetch margin trading (融资融券) detail data.
 
         Args:
             code: Optional stock code filter
+            start_date: Start date 'YYYY-MM-DD' (default: 30 days ago)
+            end_date: End date 'YYYY-MM-DD' (default: today)
 
         Returns:
             DataFrame with margin trading details.
@@ -892,19 +1027,34 @@ class AkshareProvider:
         if not _AK_AVAILABLE:
             raise ProviderError("akshare is not installed. Run: pip install akshare")
 
+        from datetime import datetime, timedelta
+
+        if not end_date:
+            end_date = datetime.now().strftime("%Y-%m-%d")
+        if not start_date:
+            start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
+
         try:
             dfs = []
-            for market, fetcher in [
-                ("sh", ak.stock_margin_detail_sse),
-                ("sz", ak.stock_margin_detail_szse),
-            ]:
-                try:
-                    mkt_df = fetcher(date="")  # type: ignore[union-attr]
-                    if mkt_df is not None and not mkt_df.empty:
-                        mkt_df["market"] = market
-                        dfs.append(mkt_df)
-                except Exception:
-                    pass
+            current = start
+            while current <= end:
+                date_str = current.strftime("%Y%m%d")
+                for market, fetcher in [
+                    ("sh", ak.stock_margin_detail_sse),
+                    ("sz", ak.stock_margin_detail_szse),
+                ]:
+                    try:
+                        mkt_df = fetcher(date=date_str)  # type: ignore[union-attr]
+                        if mkt_df is not None and not mkt_df.empty:
+                            mkt_df["market"] = market
+                            mkt_df["trade_date"] = date_str
+                            dfs.append(mkt_df)
+                    except Exception:
+                        pass
+                current += timedelta(days=1)
 
             if not dfs:
                 raise ProviderError("akshare margin fetch returned no data")
@@ -1009,6 +1159,71 @@ class AkshareProvider:
         logger.info("akshare holder: %s rows for %s", len(df), code)
         return df
 
+    def fetch_top_holders(
+        self, code: str, date: str | None = None, free: bool = True
+    ) -> pd.DataFrame:
+        """Fetch major shareholders (十大股东 / 十大流通股东).
+
+        Args:
+            code: A-share stock code (e.g. '600519').
+            date: Report date as 'YYYYMMDD' (e.g. '20240930'). Defaults to latest.
+            free: True for 十大流通股东, False for 十大股东.
+
+        Returns:
+            DataFrame with major shareholder records.
+        """
+        if not _AK_AVAILABLE:
+            raise ProviderError("akshare is not installed. Run: pip install akshare")
+
+        symbol = _to_exchange_code(code)
+
+        try:
+            if free:
+                if date:
+                    df = ak.stock_gdfx_free_top_10_em(  # type: ignore[union-attr]
+                        symbol=symbol, date=date
+                    )
+                else:
+                    df = ak.stock_gdfx_free_top_10_em(  # type: ignore[union-attr]
+                        symbol=symbol
+                    )
+            else:
+                if date:
+                    df = ak.stock_gdfx_top_10_em(  # type: ignore[union-attr]
+                        symbol=symbol, date=date
+                    )
+                else:
+                    df = ak.stock_gdfx_top_10_em(  # type: ignore[union-attr]
+                        symbol=symbol
+                    )
+        except Exception as e:
+            kind = "free_top_holders" if free else "top_holders"
+            raise ProviderError(
+                f"akshare {kind} fetch failed for {code}: {e}"
+            ) from e
+
+        if df is None or df.empty:
+            raise ProviderError(f"akshare returned empty top_holders data for {code}")
+
+        col_map = {
+            "名次": "rank",
+            "股东名称": "holder_name",
+            "股份类型": "share_type",
+            "持股数": "share_num",
+            "增减": "share_change",
+            "变动比率": "change_ratio",
+        }
+        if free:
+            col_map["股东性质"] = "holder_nature"
+            col_map["占总流通股本持股比例"] = "share_ratio"
+        else:
+            col_map["占总股本持股比例"] = "share_ratio"
+
+        df = df.rename(columns={k: v for k, v in col_map.items() if k in df.columns})
+        df["report_date"] = date or ""
+        logger.info("akshare top_holders(free=%s): %s rows for %s", free, len(df), code)
+        return df
+
     # ── Northbound flow (北向资金) ─────────────────────────────────
 
     def fetch_north_flow(self, code: str = "") -> pd.DataFrame:
@@ -1025,9 +1240,14 @@ class AkshareProvider:
             raise ProviderError("akshare is not installed. Run: pip install akshare")
 
         try:
-            df = ak.stock_hsgt_hist_em(  # type: ignore[union-attr]
-                symbol=code if code else "沪股通"
-            )
+            if code:
+                df = ak.stock_hsgt_individual_em(  # type: ignore[union-attr]
+                    symbol=code,
+                )
+            else:
+                df = ak.stock_hsgt_hist_em(  # type: ignore[union-attr]
+                    symbol="沪股通",
+                )
         except Exception as e:
             raise ProviderError(
                 f"akshare north_flow fetch failed: {e}"

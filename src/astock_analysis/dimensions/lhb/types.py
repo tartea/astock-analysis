@@ -11,3 +11,23 @@ class LHBResponse(TypedDict):
     data: list[dict]
     provider: str
     code: str
+
+
+class LHBDetailRecord(TypedDict):
+    """Single trading desk LHB detail."""
+
+    desk_name: str
+    buy_amount: float | None
+    buy_pct: float | None
+    sell_amount: float | None
+    sell_pct: float | None
+    net_amount: float | None
+
+
+class LHBDetailResponse(TypedDict):
+    """Per-trading-desk LHB detail response."""
+
+    desks: list[LHBDetailRecord]
+    provider: str
+    code: str
+    date: str

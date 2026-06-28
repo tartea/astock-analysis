@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 import sys
+from datetime import datetime, timedelta
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 os.environ["ASTOCK_CONFIG"] = os.path.join(
@@ -29,9 +30,14 @@ def _fmt(val, width: int = 14) -> str:
     return f"{val:>{width}.2f}"
 
 
-def pprint_capital_flow(response: dict) -> None:
+def pprint_capital_flow(response: dict, months: int = 3) -> None:
     """Pretty-print CapitalFlowResponse."""
-    records = response.get("records", [])
+    all_records = response.get("records", [])
+    cutoff = datetime.now() - timedelta(days=months * 30)
+    records = [
+        r for r in all_records
+        if datetime.strptime(r["date"], "%Y-%m-%d") >= cutoff
+    ]
 
     print("=" * 120)
     print("  CapitalFlowResponse 元信息")
@@ -41,17 +47,25 @@ def pprint_capital_flow(response: dict) -> None:
     print(f"  records  : {len(records)} 条")
     print()
 
-    header = (
+    header_en = (
         f"  {'date':<12} {'main_net_inflow':>14} {'main_net_pct':>10}"
         f" {'super_large_net':>14} {'super_large_pct':>10}"
         f" {'large_net':>14} {'large_pct':>10}"
         f" {'medium_net':>14} {'medium_pct':>10}"
         f" {'small_net':>14} {'small_pct':>10}"
     )
+    header_cn = (
+        f"  {'日期':<12} {'主力净流入-净额':>14} {'主力净占比':>10}"
+        f" {'超大单净流入-净额':>14} {'超大单净占比':>10}"
+        f" {'大单净流入-净额':>14} {'大单净占比':>10}"
+        f" {'中单净流入-净额':>14} {'中单净占比':>10}"
+        f" {'小单净流入-净额':>14} {'小单净占比':>10}"
+    )
     sep = "  " + "-" * (12 + 14*5 + 10*5)
 
     print(sep)
-    print(header)
+    print(header_cn)
+    print(header_en)
     print(sep)
     for r in records:
         line = (

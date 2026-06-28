@@ -7,13 +7,15 @@
 Usage:
     cd astock-analysis
     pip install -e ".[dev]"
-    python examples/north_flow_detail.py
+    python examples/north_flow_detail.py              # 市场级
+    python examples/north_flow_detail.py 600519.SH    # 个股北向
 """
 
 from __future__ import annotations
 
 import os
 import sys
+from datetime import date, datetime, timedelta
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 os.environ["ASTOCK_CONFIG"] = os.path.join(
@@ -63,12 +65,40 @@ def pprint_north_flow(response: dict) -> None:
 def main() -> None:
     from astock_analysis.dimensions.north_flow import fetch_north_flow
 
+    code = '60010'
+    label = f"个股 {code}" if code else "市场级"
+
     print()
-    print("  北向资金 (沪/深港通) 市场级数据")
+    print(f"  北向资金 (沪/深港通) {label}数据", end="")
+    if code:
+        print(" (最近3年)")
+    else:
+        print(" (最近4个月)")
     print()
 
+    # 市场级数据源持续更新，只取最近4个月；个股数据源较旧，放宽到3年
+    days = 1095 if code else 120
+    cutoff = date.today() - timedelta(days=days)
+
     try:
-        response = fetch_north_flow()
+        response = fetch_north_flow(code=code)
+        # 只保留最近四个月的数据
+        filtered_data = []
+        for row in response.get("data", []):
+            # 市场级用"日期"，个股用"持股日期"
+            date_val = row.get("日期") or row.get("持股日期")
+            if isinstance(date_val, date):
+                row_date = date_val
+            elif isinstance(date_val, str):
+                try:
+                    row_date = datetime.strptime(date_val[:10], "%Y-%m-%d").date()
+                except ValueError:
+                    continue
+            else:
+                continue
+            if row_date >= cutoff:
+                filtered_data.append(row)
+        response["data"] = filtered_data
         pprint_north_flow(response)
     except Exception as e:
         print(f"\n  [错误] {e}")
