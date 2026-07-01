@@ -67,7 +67,7 @@ def pprint_bond_convertible(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.bond_convertible import fetch_bond_convertible
+    from market_data.dimensions.bond_convertible import fetch_bond_convertible
 
     print()
 

@@ -71,7 +71,7 @@ def pprint_ipo(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.ipo import fetch_ipo
+    from market_data.dimensions.ipo import fetch_ipo
 
     print()
 

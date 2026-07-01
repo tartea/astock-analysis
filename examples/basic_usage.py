@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MVP example: fetch K-line data using the astock_analysis framework.
+"""MVP example: fetch K-line data using the market_data framework.
 
 This demonstrates the full flow:
 1. Configuration loading from providers.yaml
@@ -28,9 +28,9 @@ os.environ["ASTOCK_CONFIG"] = os.path.join(
 
 
 def main():
-    from astock_analysis.dimensions.kline import fetch_kline
-    from astock_analysis.core.config import get_config
-    from astock_analysis.core.cache import cache_stats
+    from market_data.dimensions.kline import fetch_kline
+    from market_data.core.config import get_config
+    from market_data.core.cache import cache_stats
 
     # ── Show loaded config ──────────────────────────────────────
     config = get_config()

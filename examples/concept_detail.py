@@ -68,7 +68,7 @@ def pprint_concept(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.concept import fetch_concept
+    from market_data.dimensions.concept import fetch_concept
 
     print()
 

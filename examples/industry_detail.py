@@ -68,7 +68,7 @@ def pprint_industry(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.industry import fetch_industry
+    from market_data.dimensions.industry import fetch_industry
 
     print()
 

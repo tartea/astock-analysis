@@ -69,7 +69,7 @@ def pprint_margin(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.margin import fetch_margin
+    from market_data.dimensions.margin import fetch_margin
 
     end_date = datetime.now().strftime("%Y-%m-%d")
     start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")

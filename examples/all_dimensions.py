@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Complete demo: exercise all 19 dimensions via the astock_analysis framework.
+"""Complete demo: exercise all 19 dimensions via the market_data framework.
 
 Each dimension is called once, the result is inspected, and a compact summary
 is printed to stdout.  Network failures are caught gracefully so the script
@@ -84,8 +84,8 @@ def _summarise_dict(label: str, d: dict) -> str:
 # ── main ─────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    from astock_analysis.core.config import get_config
-    from astock_analysis.core.cache import cache_stats
+    from market_data.core.config import get_config
+    from market_data.core.cache import cache_stats
 
     config = get_config()
     dims = sorted(config.dimensions.keys())
@@ -102,97 +102,97 @@ def main() -> None:
     skip_count = 0
 
     # ── 1. kline ──────────────────────────────────────────────────
-    from astock_analysis.dimensions.kline import fetch_kline
+    from market_data.dimensions.kline import fetch_kline
     r = _call("1. kline (K线)", fetch_kline, STOCK_CODE, START_DATE, END_DATE)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 2. realtime ──────────────────────────────────────────────
-    from astock_analysis.dimensions.realtime import fetch_realtime
+    from market_data.dimensions.realtime import fetch_realtime
     r = _call("2. realtime (实时行情)", fetch_realtime, STOCK_CODE)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 3. index ─────────────────────────────────────────────────
-    from astock_analysis.dimensions.index import fetch_index
+    from market_data.dimensions.index import fetch_index
     r = _call("3. index (指数)", fetch_index, INDEX_CODE, START_DATE, END_DATE)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 4. financials ────────────────────────────────────────────
-    from astock_analysis.dimensions.financials import fetch_financials
+    from market_data.dimensions.financials import fetch_financials
     r = _call("4. financials (财务数据)", fetch_financials, STOCK_CODE)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 5. stock_info ────────────────────────────────────────────
-    from astock_analysis.dimensions.stock_info import fetch_stock_info
+    from market_data.dimensions.stock_info import fetch_stock_info
     r = _call("5. stock_info (基本信息)", fetch_stock_info, STOCK_CODE)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 6. holder ────────────────────────────────────────────────
-    from astock_analysis.dimensions.holder import fetch_holder
+    from market_data.dimensions.holder import fetch_holder
     r = _call("6. holder (股东数据)", fetch_holder, STOCK_CODE)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 7. capital_flow ──────────────────────────────────────────
-    from astock_analysis.dimensions.capital_flow import fetch_capital_flow
+    from market_data.dimensions.capital_flow import fetch_capital_flow
     r = _call("7. capital_flow (资金流向)", fetch_capital_flow, STOCK_CODE)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 8. north_flow ────────────────────────────────────────────
-    from astock_analysis.dimensions.north_flow import fetch_north_flow
+    from market_data.dimensions.north_flow import fetch_north_flow
     r = _call("8. north_flow (北向资金)", fetch_north_flow)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 9. margin ────────────────────────────────────────────────
-    from astock_analysis.dimensions.margin import fetch_margin
+    from market_data.dimensions.margin import fetch_margin
     r = _call("9. margin (融资融券)", fetch_margin, STOCK_CODE)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 10. lhb ──────────────────────────────────────────────────
-    from astock_analysis.dimensions.lhb import fetch_lhb
+    from market_data.dimensions.lhb import fetch_lhb
     r = _call("10. lhb (龙虎榜)", fetch_lhb, STOCK_CODE, START_DATE, END_DATE)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 11. block_trade ──────────────────────────────────────────
-    from astock_analysis.dimensions.block_trade import fetch_block_trade
+    from market_data.dimensions.block_trade import fetch_block_trade
     r = _call("11. block_trade (大宗交易)", fetch_block_trade, STOCK_CODE, START_DATE, END_DATE)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 12. sentiment ────────────────────────────────────────────
-    from astock_analysis.dimensions.sentiment import fetch_sentiment
+    from market_data.dimensions.sentiment import fetch_sentiment
     r = _call("12. sentiment (市场情绪)", fetch_sentiment)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 13. news ─────────────────────────────────────────────────
-    from astock_analysis.dimensions.news import fetch_news
+    from market_data.dimensions.news import fetch_news
     r = _call("13. news (新闻)", fetch_news, STOCK_CODE)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 14. industry ─────────────────────────────────────────────
-    from astock_analysis.dimensions.industry import fetch_industry
+    from market_data.dimensions.industry import fetch_industry
     r = _call("14. industry (行业板块)", fetch_industry)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 15. concept ──────────────────────────────────────────────
-    from astock_analysis.dimensions.concept import fetch_concept
+    from market_data.dimensions.concept import fetch_concept
     r = _call("15. concept (概念板块)", fetch_concept)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 16. fund ─────────────────────────────────────────────────
-    from astock_analysis.dimensions.fund import fetch_fund
+    from market_data.dimensions.fund import fetch_fund
     r = _call("16. fund (基金)", fetch_fund)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 17. ipo ──────────────────────────────────────────────────
-    from astock_analysis.dimensions.ipo import fetch_ipo
+    from market_data.dimensions.ipo import fetch_ipo
     r = _call("17. ipo (新股)", fetch_ipo)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 18. futures ──────────────────────────────────────────────
-    from astock_analysis.dimensions.futures import fetch_futures
+    from market_data.dimensions.futures import fetch_futures
     r = _call("18. futures (期货)", fetch_futures)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 
     # ── 19. bond_convertible ─────────────────────────────────────
-    from astock_analysis.dimensions.bond_convertible import fetch_bond_convertible
+    from market_data.dimensions.bond_convertible import fetch_bond_convertible
     r = _call("19. bond_convertible (可转债)", fetch_bond_convertible)
     ok_count += 1 if r else 0; skip_count += 0 if r else 1  # pyright: ignore
 

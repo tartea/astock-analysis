@@ -66,7 +66,7 @@ def pprint_block_trade(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.block_trade import fetch_block_trade
+    from market_data.dimensions.block_trade import fetch_block_trade
 
     print()
     print(f"  股票: {STOCK_CODE} (贵州茅台)")

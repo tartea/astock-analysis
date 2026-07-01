@@ -64,7 +64,7 @@ def pprint_realtime(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.realtime import fetch_realtime
+    from market_data.dimensions.realtime import fetch_realtime
 
     print()
     print(f"  股票: {STOCK_CODE} (贵州茅台)")

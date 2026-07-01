@@ -63,7 +63,7 @@ def pprint_north_flow(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.north_flow import fetch_north_flow
+    from market_data.dimensions.north_flow import fetch_north_flow
 
     code = '60010'
     label = f"个股 {code}" if code else "市场级"

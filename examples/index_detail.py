@@ -60,7 +60,7 @@ def pprint_index(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.index import fetch_index
+    from market_data.dimensions.index import fetch_index
 
     print()
     print(f"  指数: {INDEX_CODE} (上证指数)")

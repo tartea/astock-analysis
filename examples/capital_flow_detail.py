@@ -87,7 +87,7 @@ def pprint_capital_flow(response: dict, months: int = 3) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.capital_flow import fetch_capital_flow
+    from market_data.dimensions.capital_flow import fetch_capital_flow
 
     print()
     print(f"  股票: {STOCK_CODE} (贵州茅台)")

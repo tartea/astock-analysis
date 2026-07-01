@@ -46,7 +46,7 @@ def pprint_sentiment(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.sentiment import fetch_sentiment
+    from market_data.dimensions.sentiment import fetch_sentiment
 
     print()
 

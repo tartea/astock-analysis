@@ -81,7 +81,7 @@ def pprint_kline_response(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.kline import fetch_kline
+    from market_data.dimensions.kline import fetch_kline
 
     print()
     print(f"  股票: {STOCK_CODE} (贵州茅台)")

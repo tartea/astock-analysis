@@ -68,7 +68,7 @@ def pprint_fund(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.fund import fetch_fund
+    from market_data.dimensions.fund import fetch_fund
 
     print()
     print("  ETF基金列表 (新浪)")

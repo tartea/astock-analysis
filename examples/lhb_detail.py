@@ -97,7 +97,7 @@ def pprint_lhb_detail(desks: list[dict]) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.lhb import fetch_lhb, fetch_lhb_detail
+    from market_data.dimensions.lhb import fetch_lhb, fetch_lhb_detail
 
     print()
     print(f"  股票: {STOCK_CODE} (永鼎股份)")

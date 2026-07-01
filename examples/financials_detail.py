@@ -68,7 +68,7 @@ def pprint_financials(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.financials import fetch_financials
+    from market_data.dimensions.financials import fetch_financials
 
     print()
     print(f"  股票: {STOCK_CODE} (贵州茅台)")

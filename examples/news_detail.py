@@ -66,7 +66,7 @@ def pprint_news(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.news import fetch_news
+    from market_data.dimensions.news import fetch_news
 
     print()
     print(f"  股票: {STOCK_CODE} (贵州茅台)")

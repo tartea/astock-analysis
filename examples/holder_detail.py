@@ -113,7 +113,7 @@ def pprint_top_holders(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.holder import fetch_holder, fetch_top_holders
+    from market_data.dimensions.holder import fetch_holder, fetch_top_holders
 
     print()
     print(f"  股票: {STOCK_CODE} (贵州茅台)")

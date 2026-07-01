@@ -66,7 +66,7 @@ def pprint_futures(response: dict) -> None:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.futures import fetch_futures
+    from market_data.dimensions.futures import fetch_futures
 
     print()
     print(f"  期货: {FUTURES_CODE} (沪深300股指期货主力)")

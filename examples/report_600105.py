@@ -69,21 +69,21 @@ def _fmt_date(d) -> str:
 
 
 def main() -> None:
-    from astock_analysis.dimensions.kline import fetch_kline
-    from astock_analysis.dimensions.realtime import fetch_realtime
-    from astock_analysis.dimensions.stock_info import fetch_stock_info
-    from astock_analysis.dimensions.financials import fetch_financials
-    from astock_analysis.dimensions.holder import fetch_holder
-    from astock_analysis.dimensions.capital_flow import fetch_capital_flow
-    from astock_analysis.dimensions.index import fetch_index
-    from astock_analysis.dimensions.sentiment import fetch_sentiment
-    from astock_analysis.dimensions.news import fetch_news
-    from astock_analysis.dimensions.industry import fetch_industry
-    from astock_analysis.dimensions.concept import fetch_concept
-    from astock_analysis.dimensions.margin import fetch_margin
-    from astock_analysis.dimensions.lhb import fetch_lhb
-    from astock_analysis.dimensions.block_trade import fetch_block_trade
-    from astock_analysis.dimensions.north_flow import fetch_north_flow
+    from market_data.dimensions.kline import fetch_kline
+    from market_data.dimensions.realtime import fetch_realtime
+    from market_data.dimensions.stock_info import fetch_stock_info
+    from market_data.dimensions.financials import fetch_financials
+    from market_data.dimensions.holder import fetch_holder
+    from market_data.dimensions.capital_flow import fetch_capital_flow
+    from market_data.dimensions.index import fetch_index
+    from market_data.dimensions.sentiment import fetch_sentiment
+    from market_data.dimensions.news import fetch_news
+    from market_data.dimensions.industry import fetch_industry
+    from market_data.dimensions.concept import fetch_concept
+    from market_data.dimensions.margin import fetch_margin
+    from market_data.dimensions.lhb import fetch_lhb
+    from market_data.dimensions.block_trade import fetch_block_trade
+    from market_data.dimensions.north_flow import fetch_north_flow
 
     now = datetime.now()
 
