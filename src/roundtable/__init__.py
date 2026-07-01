@@ -68,7 +68,7 @@ async def run_roundtable(
     output_dir: str | Path = ".",
     model: str = "sonnet",
 ) -> Path:
-    if rounds < 1 or rounds > 10:
+    if rounds < 1 or rounds > 100:
         raise ValueError(f"轮次必须在 1-10 之间，当前值: {rounds}")
 
     # 1. 加载角色
