@@ -11,12 +11,26 @@
 
 from pathlib import Path
 
-from analyst_agents.role_loader import load_roles
-from analyst_agents.state import AgentMessage, RoleConfig
+import yaml
+
+from .role_loader import load_roles
+from .state import AgentMessage, RoleConfig
 from llm.client import call_claude
 
 from .data_fetcher import fetch_data_for_roles
 from .md_render import render_markdown
+
+
+# ── Prompt 模板加载 ─────────────────────────────────────────────
+
+def _load_prompt(name: str, prompts_dir: str | Path = "config/prompts") -> str:
+    """从 YAML 文件加载 prompt 模板"""
+    path = Path(prompts_dir) / f"{name}.yml"
+    if not path.is_file():
+        raise FileNotFoundError(f"Prompt 模板不存在: {path}")
+    with open(path, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    return data["template"]
 
 
 # ── 上下文构建 ─────────────────────────────────────────────────
@@ -79,6 +93,7 @@ async def run_roundtable(
 
     # 3. for 循环发言
     conversation_history: list[AgentMessage] = []
+    speaker_tpl = _load_prompt("speaker")
 
     for round_num in range(1, rounds + 1):
         for role in participants:
@@ -87,17 +102,14 @@ async def run_roundtable(
                 pre_fetched_data, role.allowed_dimensions
             )
 
-            user_message = (
-                f"# 任务\n\n"
-                f"你正在参与一场关于股票 **{code}** 的多角色分析讨论。\n"
-                f"这是第 **{round_num}** 轮发言（共 {rounds} 轮）。\n\n"
-                f"## 你的角色\n\n"
-                f"**{role.role}** —— 请从你的专业角度发表分析意见。\n\n"
-                f"## 数据\n\n"
-                f"{role_data}\n\n"
-                f"## 已有讨论\n\n"
-                f"{history_text}\n\n"
-                f"请发表你的第 {round_num} 轮分析。控制在 400 字以内。"
+            user_message = speaker_tpl.format(
+                code=code,
+                round_num=round_num,
+                rounds=rounds,
+                role_name=role.name,
+                role_title=role.role,
+                role_data=role_data,
+                history_text=history_text,
             )
 
             content = await call_claude(role.system_prompt, user_message, model=model)
@@ -121,19 +133,14 @@ async def run_roundtable(
     else:
         summarizer_role = summarizers[0]
         history_text = _build_history_text(conversation_history)
+        summarizer_tpl = _load_prompt("summarizer")
 
-        user_message = (
-            f"# 总结任务\n\n"
-            f"以下是关于股票 **{code}** 的 {rounds} 轮多角色分析讨论。\n"
-            f"参与角色：{', '.join(r.role for r in participants)}。\n\n"
-            f"## 完整讨论记录\n\n"
-            f"{history_text}\n\n"
-            f"## 数据报告\n\n"
-            f"{pre_fetched_data}\n\n"
-            f"请给出最终分析总结。控制在 600 字以内，包含：\n"
-            f"1) 各角色核心观点提炼\n"
-            f"2) 关键共识与分歧\n"
-            f"3) 综合评估与建议"
+        user_message = summarizer_tpl.format(
+            code=code,
+            rounds=rounds,
+            participants=", ".join(r.role for r in participants),
+            history_text=history_text,
+            pre_fetched_data=pre_fetched_data,
         )
 
         final_summary = await call_claude(summarizer_role.system_prompt, user_message)

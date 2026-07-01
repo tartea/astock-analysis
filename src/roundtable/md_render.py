@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from analyst_agents.state import AgentMessage, RoleConfig
+from .state import AgentMessage, RoleConfig
 
 
 def render_markdown(

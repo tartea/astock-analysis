@@ -1,0 +1,21 @@
+# 总结人 prompt 模板
+# 可用占位符: {code}, {rounds}, {participants}, {history_text}, {pre_fetched_data}
+
+template: |
+  # 总结任务
+
+  以下是关于股票 **{code}** 的 {rounds} 轮多角色分析讨论。
+  参与角色：{participants}。
+
+  ## 完整讨论记录
+
+  {history_text}
+
+  ## 数据报告
+
+  {pre_fetched_data}
+
+  请给出最终分析总结。控制在 600 字以内，包含：
+  1) 各角色核心观点提炼
+  2) 关键共识与分歧
+  3) 综合评估与建议

@@ -1,0 +1,22 @@
+# 参与者发言 prompt 模板
+# 可用占位符: {code}, {round_num}, {rounds}, {role_name}, {role_title}, {role_data}, {history_text}
+
+template: |
+  # 任务
+
+  你正在参与一场关于股票 **{code}** 的多角色分析讨论。
+  这是第 **{round_num}** 轮发言（共 {rounds} 轮）。
+
+  ## 你的角色
+
+  **{role_title}** —— 请从你的专业角度发表分析意见。
+
+  ## 数据
+
+  {role_data}
+
+  ## 已有讨论
+
+  {history_text}
+
+  请发表你的第 {round_num} 轮分析。控制在 400 字以内。

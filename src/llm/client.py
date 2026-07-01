@@ -1,4 +1,4 @@
-"""Claude Agent SDK 公共调用模块 —— 供 analyst_agents 和 roundtable 复用"""
+"""Claude Agent SDK 公共调用模块 —— 供 roundtable 等模块复用"""
 
 from claude_agent_sdk import (
     query,
